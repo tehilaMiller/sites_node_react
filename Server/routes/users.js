@@ -1,6 +1,6 @@
 const express = require("express")
 const bcrypt = require("bcrypt")
-const {auth} =require("../middleWares/auth")
+const {auth,authAdmin} =require("../middleWares/auth")
 const jwt = require("jsonwebtoken")
 const router = express.Router()
 const { validateUser,UserModel,validLogin ,createToken } = require("../models/userModel"); // תלוי איפה הפונקציה מוגדרת
@@ -19,6 +19,16 @@ router.get("/myEmail",auth,async(req,res)=>{
         
 
     }})
+router.get("/usersList" ,authAdmin , async (req, res) => {
+    try{
+        let data = await UserModel.find({},{password:0})
+        res.json(data);
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).json({msg:"err",err})
+    }
+})
 router.post("/",async(req,res)=>{
     let validBody= validateUser(req.body);
     //במידה ויש טעות בריק באדי שהגיע מצד לקוח
@@ -62,7 +72,7 @@ router.post("/login",async(req,res)=>{
             return res.status(401).json({msg:"User or password not match"})
         }
         //מייצרים טוקן שמכיל את האיידי של המשתמש
-        let newToken = createToken(user._id)
+        let newToken = createToken(user._id, user.role)
         //מחזירים לצד לקוח את הטוקן
         res.json({token:newToken})
     }
